@@ -32,6 +32,8 @@ app.use("/api-docs", require("_helpers/swagger"));
 app.use("/attendances", require("./attendances/attendances.controller"));
 app.use("/action-logs", require("./attendances/action_logs.controller"));
 app.use("/payslips", require("./payslips/payslips.controller"));
+app.use("/leaves", require("./leaves/leaves.controller"));
+app.use("/calendars", require("./calendars/calendars.controller"));
 
 // Global Error Handler
 app.use(errorHandler);

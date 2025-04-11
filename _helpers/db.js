@@ -36,6 +36,8 @@ async function initialize() {
         db.Attendance = require("../attendances/attendance.model")(sequelize, DataTypes);
         db.ActionLog = require("../attendances/action_log.model")(sequelize, DataTypes); 
         db.Payslip = require("../payslips/payslip.model")(sequelize, DataTypes);
+        db.Leave = require("../leaves/leave.model")(sequelize, DataTypes);
+        db.Calendar = require("../calendars/calendar.model")(sequelize, DataTypes);
 
         console.log("Loaded Models:", Object.keys(db));
 
@@ -53,9 +55,18 @@ async function initialize() {
         db.ActionLog.belongsTo(db.Account, { foreignKey: "userId" });
         db.Account.hasMany(db.ActionLog, { foreignKey: "userId" });
 
+        db.Account.hasMany(db.Calendar, { foreignKey: 'userId' });
+        db.Calendar.belongsTo(db.Account, { foreignKey: 'userId' });
+
         // Sync models with database
-        await sequelize.sync({ alter: true });
-        console.log("Database & tables synchronized.");
+        await sequelize.sync({ alter: true }).then(() => {
+            console.log("Database & tables synchronized.");
+        }).catch((err) => {
+            console.error("Error syncing database:", err);
+        });
+        
+        // Return the db object so it can be used in other files
+        return db;
     } catch (error) {
         console.error("Database initialization error:", error);
         throw error;
@@ -64,10 +75,10 @@ async function initialize() {
 
 Object.keys(db).forEach((modelName) => {
     if (db[modelName].associate) {
-      db[modelName].associate(db);
+        db[modelName].associate(db);
     }
-  });
-  
+});
+
 // Create a `ready` Promise that resolves when initialization is complete
 db.ready = initialize();
 
