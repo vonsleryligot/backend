@@ -55,9 +55,6 @@ async function initialize() {
         db.ActionLog.belongsTo(db.Account, { foreignKey: "userId" });
         db.Account.hasMany(db.ActionLog, { foreignKey: "userId" });
 
-        db.Account.hasMany(db.Calendar, { foreignKey: 'userId' });
-        db.Calendar.belongsTo(db.Account, { foreignKey: 'userId' });
-
         // Sync models with database
         await sequelize.sync({ alter: true }).then(() => {
             console.log("Database & tables synchronized.");
