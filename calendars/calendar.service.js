@@ -36,11 +36,20 @@ async function createEvent(eventData) {
 }
   
 async function updateEvent(id, eventData) {
-  const event = await Calendar.findByPk(id);
-  if (!event) throw new Error("Event not found");
+  try {
+    const event = await Calendar.findByPk(id);
+    if (!event) {
+      throw new Error("Event not found");
+    }
 
-  return await event.update(eventData);
+    const updatedEvent = await event.update(eventData);
+    return updatedEvent;
+  } catch (error) {
+    console.error("Failed to update event:", error.message);
+    throw error;
+  }
 }
+
 
 async function deleteEvent(id) {
   const event = await Calendar.findByPk(id);

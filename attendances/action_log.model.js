@@ -37,10 +37,10 @@ module.exports = (sequelize, DataTypes) => {
         details,
       });
 
-      console.log("✅ Shift change logged:", actionLog.toJSON());
+      console.log("Shift change logged:", actionLog.toJSON());
       return actionLog;
     } catch (error) {
-      console.error("❌ Error logging shift change:", error);
+      console.error("Error logging shift change:", error);
       throw error;
     }
   };
@@ -88,9 +88,9 @@ module.exports = (sequelize, DataTypes) => {
       action.status = "approved";
       await action.save();
 
-      console.log("✅ Attendance updated and action approved successfully");
+      console.log("Attendance updated and action approved successfully");
     } catch (error) {
-      console.error("❌ Error in approveShiftChange:", error);
+      console.error("Error in approveShiftChange:", error);
       throw error;
     }
   };
