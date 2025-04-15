@@ -93,8 +93,13 @@ Features:
 ## 🚀 Setup Instructions
 
 ```bash
+# Clone the repository
+git clone https://github.com/vonsleryligot/backend.git
+
+
 # Install dependencies
 npm install
+
 
 # Start the server
 npm run start:dev
