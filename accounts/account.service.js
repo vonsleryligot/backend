@@ -237,9 +237,19 @@ async function update(id, params) {
     const user = await db.Account.findByPk(id);
     if (!user) throw 'User not found';
 
+    // Hash password if updating
+    if (params.password) {
+        params.passwordHash = await hash(params.password);
+    }
+
+    // Remove plain password fields before assigning to user object
+    delete params.password;
+    delete params.confirmPassword;
+
     Object.assign(user, params);
-    await user.save();  // Ensure the update is saved
+    await user.save();
 }
+
 
 async function _delete(id) {
     const account = await getAccount(id);
