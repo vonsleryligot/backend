@@ -6,6 +6,7 @@ const { Op } = require('sequelize');
 const sendEmail = require('_helpers/send-email');
 const db = require('_helpers/db');
 const Role = require('_helpers/role');
+const { v4: uuidv4 } = require('uuid');
 
 module.exports = {
     authenticate,
@@ -13,6 +14,7 @@ module.exports = {
     revokeToken,
     register,
     verifyEmail,
+    resendVerification,
     forgotPassword,
     validateResetToken,
     resetPassword,
@@ -146,6 +148,25 @@ async function verifyEmail({ token }) {
     await account.save();
 }
 
+// Function to resend verification email
+async function resendVerification(email) {
+    const account = await db.Account.findOne({ where: { email } });
+  
+    if (!account) throw 'Account not found. Please check the email address.';
+  
+    const newVerificationToken = generateSixDigitToken();
+    account.verificationToken = newVerificationToken;
+    await account.save();
+  
+    // Pass the account and token (instead of origin) to the sendVerificationEmail function
+    await sendVerificationEmail(account, true); // Set 'true' to indicate a verification link should be sent
+  }
+  
+  // 6-digit token generator
+  function generateSixDigitToken() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  }
+  
 async function forgotPassword({ email }, origin) {
     const account = await db.Account.findOne({ where: { email } });
 
@@ -154,7 +175,7 @@ async function forgotPassword({ email }, origin) {
 
     // create reset token that expires after 30 minutes
     account.resetToken = Math.floor(100000 + Math.random() * 900000).toString();
-    account.resetTokenExpires = new Date(Date.now() + 30 * 60 * 1000);
+    account.resetTokenExpires = new Date(Date.now() + 5 * 60 * 1000);
     await account.save();
 
     // send email
@@ -251,7 +272,6 @@ function generateJwtToken(account) {
     );
 }
 
-
 function generateRefreshToken(account, ipAddress) {
     // create a refresh token that expires in 7 days
     return new db.RefreshToken({
@@ -275,20 +295,51 @@ async function sendVerificationEmail(account, origin) {
     let message;
     if (origin) {
         const verifyUrl = `${account.verificationToken}`;
-        message = `<p>Here's your verification code to continue signing up, the code will be valid for 30 minutes:</p>
+        message = `<p>Here's your verification code to continue signing up, the code will be valid for 5 minutes:</p>
                    <p><a href="${verifyUrl}">${verifyUrl}</a></p>`;
     } else {
-        message = `<p>Please use the below token to verify your email address with the <code>/account/verify-email</code> api route:</p>
+        message = `<p>Please use the below token to verify your email address with the <a href="${origin}/account/verify-email">Verify Email</a></p>
                    <p><code>${account.verificationToken}</code></p>`;
     }
 
     await sendEmail({
         to: account.email,
-        subject: 'Sign-up Verification API - Verify Email',
+        subject: 'Sign-up Verification Code',
         html: `<h4>Verify Email</h4>
                <p>Thanks for registering!</p>
                ${message}`
     });
+}
+
+async function resendVerification(email, origin) {
+    const account = await db.Account.findOne({ where: { email } });
+
+    if (!account) throw new Error('Account not found. Please check the email address.');
+
+    account.verificationToken = generateSixDigitToken(); // generate new token
+    await account.save();
+
+    let message;
+    if (origin) {
+        const verifyUrl = `${account.verificationToken}`;
+        message = `<p>Here's your verification code to continue signing up, the code will be valid for 5 minutes:</p>
+                   <p><a href="${verifyUrl}">${verifyUrl}</a></p>`;
+    } else {
+        message = `<p>Please use the token below to verify your email address with the <a href="${origin}/account/verify-email">Verify Email</a></p>
+                   <p><code>${account.verificationToken}</code></p>`;
+    }
+
+    try {
+        await sendEmail({
+            to: account.email,
+            subject: 'Sign-up Verification Email',
+            html: `<h4>Verify Email</h4>
+                   <p>Thanks for registering!</p>
+                   ${message}`
+        });
+    } catch (error) {
+        throw new Error('Failed to send verification email. Please try again.');
+    }
 }
 
 async function sendAlreadyRegisteredEmail(email, origin) {
@@ -312,7 +363,7 @@ async function sendPasswordResetEmail(account, origin) {
     let message;
     if (origin) {
         const resetUrl = `${origin}/account/reset-password?token=${account.resetToken}`;
-        message = `<p>Please click the below link to reset your password, the link will be valid for 1 day:</p>
+        message = `<p>Please click the below link to reset your password, the link will be valid for 5 minutes:</p>
                    <p><a href="${resetUrl}">${resetUrl}</a></p>`;
     } else {
         message = `<p>Please use the below token to reset your password with the <code>/account/reset-password</code> api route:</p>
@@ -321,7 +372,7 @@ async function sendPasswordResetEmail(account, origin) {
 
     await sendEmail({
         to: account.email,
-        subject: 'Sign-up Verification API - Reset Password',
+        subject: 'Reset Password Verification Code',
         html: `<h4>Reset Password Email</h4>
                ${message}`
     });

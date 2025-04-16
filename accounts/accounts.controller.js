@@ -5,6 +5,8 @@ const validateRequest = require('_middleware/validate-request');
 const authorize = require('_middleware/authorize')
 const Role = require('_helpers/role');
 const accountService = require('./account.service');
+// const { v4: uuidv4 } = require('uuid');
+
 
 // routes
 router.post('/authenticate', authenticateSchema, authenticate);
@@ -12,6 +14,7 @@ router.post('/refresh-token', refreshToken);
 router.post('/revoke-token', authorize(), revokeTokenSchema, revokeToken);
 router.post('/register', registerSchema, register);
 router.post('/verify-email', verifyEmailSchema, verifyEmail);
+router.post('/resend-verification', resendVerificationSchema, resendVerification); //
 router.post('/forgot-password', forgotPasswordSchema, forgotPassword);
 router.post('/validate-reset-token', validateResetTokenSchema, validateResetToken);
 router.post('/reset-password', resetPasswordSchema, resetPassword);
@@ -109,11 +112,27 @@ function verifyEmailSchema(req, res, next) {
     validateRequest(req, next, schema);
 }
 
+// Schema for resending verification email (email)
+function resendVerificationSchema(req, res, next) {
+    const schema = Joi.object({
+      email: Joi.string().email().required(),
+    });
+    validateRequest(req, next, schema);
+  }
+
 function verifyEmail(req, res, next) {
     accountService.verifyEmail(req.body)
         .then(() => res.json({ message: 'Verification successful, you can now login' }))
         .catch(next);
 }
+
+// Controller for resending verification email (using email)
+function resendVerification(req, res, next) {
+    accountService
+      .resendVerification(req.body.email) // <-- match ni sa service
+      .then(() => res.json({ message: 'Verification email resent successfully.' }))
+      .catch(next);
+  }
 
 function forgotPasswordSchema(req, res, next) {
     const schema = Joi.object({
