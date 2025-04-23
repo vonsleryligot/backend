@@ -16,13 +16,6 @@ function model(sequelize) {
         firstName: { type: DataTypes.STRING, allowNull: false },
         lastName: { type: DataTypes.STRING, allowNull: false },
         role: { type: DataTypes.STRING, allowNull: false },
-        employmentType: { type: DataTypes.STRING, allowNull:true },
-        department: { type: DataTypes.STRING, allowNull:true },
-        status: { type: DataTypes.STRING, allowNull: true },
-        rank: { type: DataTypes.STRING, allowNull: true },
-        rate: { type: DataTypes.STRING, allowNull: true },
-        bank: { type: DataTypes.STRING, allowNull: true },
-        position: { type: DataTypes.STRING, allowNull: true },
         country: { type: DataTypes.STRING, allowNull: false },
         city: { type: DataTypes.STRING, allowNull: false },
         postalCode: { type: DataTypes.STRING, allowNull: true },
@@ -35,6 +28,7 @@ function model(sequelize) {
         passwordReset: { type: DataTypes.DATE },
         created: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
         updated: { type: DataTypes.DATE },
+        archived: { type: DataTypes.BOOLEAN, defaultValue: false },
         isVerified: {
             type: DataTypes.VIRTUAL,
             get() { return !!(this.verified || this.passwordReset); }

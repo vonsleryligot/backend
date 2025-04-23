@@ -6,6 +6,7 @@ module.exports = {
   updateAttendance,
   getAllAttendances,
   getAttendanceById,
+  getAbsentDates,
 };
 
 async function recordAttendance(data) {
@@ -102,4 +103,45 @@ async function getAttendanceById(id) {
   return await db.Attendance.findByPk(id, {
     include: db.Upload,
   });
+}
+
+// ADD THIS FUNCTION
+async function getAbsentDates({ userId, startDate, endDate }) {
+  if (!userId || !startDate || !endDate) {
+    throw new Error("Missing required fields: userId, startDate, or endDate");
+  }
+
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  // Generate working days list (excluding weekends)
+  const workingDates = [];
+  const current = new Date(start);
+
+  while (current <= end) {
+    const day = current.getDay();
+    if (day !== 0 && day !== 6) {
+      workingDates.push(current.toISOString().split("T")[0]);
+    }
+    current.setDate(current.getDate() + 1);
+  }
+
+  // Get all attendance records for that user in range
+  const records = await db.Attendance.findAll({
+    where: {
+      userId,
+      date: {
+        [Op.between]: [startDate, endDate],
+      },
+    },
+    attributes: ["date"],
+  });
+
+  const attendedDates = records.map((r) => r.date.toISOString().split("T")[0]);
+
+  // Find dates in workingDates that are not in attendedDates
+  const absentDates = workingDates.filter((date) => !attendedDates.includes(date));
+
+  return absentDates;
+
 }

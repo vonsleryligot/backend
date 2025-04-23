@@ -5,6 +5,7 @@ const validateRequest = require('_middleware/validate-request');
 const authorize = require('_middleware/authorize')
 const Role = require('_helpers/role');
 const accountService = require('./account.service');
+const employmentService = require("../employments/employment.service");
 // const { v4: uuidv4 } = require('uuid');
 
 
@@ -199,7 +200,7 @@ function createSchema(req, res, next) {
         department: Joi.string().required(),
         email: Joi.string().email().required(),
         employmentType: Joi.string().required(),
-        status: Joi.string().required(),
+        // status: Joi.string().required(),
         rank: Joi.string().required(),
         rate: Joi.string().required(),
         bank: Joi.string().required(),
@@ -215,18 +216,26 @@ function createSchema(req, res, next) {
     validateRequest(req, next, schema);
 }
 
-function create(req, res, next) {
-    console.log("Creating Account...");  
-    console.log("Authenticated User:", req.user);  
-    console.log("Received Data:", req.body);  
+async function create(req, res, next) {
+    try {
+        // Create Account with Employment
+        const accountData = req.body;
+        const employmentId = accountData.employmentId; // assuming this is passed
 
-    accountService.create(req.body, req.user)
-        .then(account => res.json(account))
-        .catch(error => {
-            console.error("Error creating account:", error);
-            res.status(500).json({ message: "Internal Server Error" });
-        });
+        // Create the account first
+        const newAccount = await accountService.create(accountData);
+
+        // Now create or update the employment linked to the account
+        const employmentData = { ...accountData, accountId: newAccount.id }; // Link account with employment
+        await employmentService.createOrUpdate(employmentData);
+
+        res.json(newAccount);
+    } catch (error) {
+        console.error("Error creating account:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
 }
+
 
 function updateSchema(req, res, next) {
     const schema = Joi.object({
@@ -260,7 +269,7 @@ async function update(req, res, next) {
         const updateData = req.body;
 
         // Ensure only allowed fields are updated
-        const allowedFields = ['firstName', 'lastName','password', 'confirmPassword', 'phone', 'department','employmentType', 'status', 'rank', 'rate', 'bank', 'position', 'role', 'country', 'city', 'postalCode'];
+        const allowedFields = ['firstName', 'lastName', 'employmentId', 'rank', 'rate', 'bank', 'position', 'phone', 'role'];
         Object.keys(updateData).forEach(key => {
             if (!allowedFields.includes(key)) {
                 delete updateData[key];
@@ -270,7 +279,15 @@ async function update(req, res, next) {
         const user = await accountService.getById(userId);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
+        // Update the account
         await accountService.update(userId, updateData);
+
+        // Link updated employment
+        if (updateData.employmentId) {
+            const employmentData = { ...updateData, accountId: user.id };
+            await employmentService.createOrUpdate(employmentData);
+        }
+
         const updatedUser = await accountService.getById(userId);
 
         res.json(updatedUser);

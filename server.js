@@ -15,7 +15,7 @@ app.use(cookieParser());
 app.use(
   cors({
     origin: "http://localhost:5173",
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "DELETE" ,"PATCH"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
   })
@@ -34,6 +34,7 @@ app.use("/action-logs", require("./attendances/action_logs.controller"));
 app.use("/payslips", require("./payslips/payslips.controller"));
 app.use("/leaves", require("./leaves/leaves.controller"));
 app.use("/calendars", require("./calendars/calendars.controller"));
+app.use("/employments", require("./employments/employments.controller"));
 
 // Global Error Handler
 app.use(errorHandler);

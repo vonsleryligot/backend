@@ -33,6 +33,18 @@ router.get("/", async (req, res) => {
   }
 });
 
+// GET /attendances/absents?userId=1&startDate=2025-04-01&endDate=2025-04-16
+router.get("/absents", async (req, res) => {
+  try {
+    const { userId, startDate, endDate } = req.query;
+    const absents = await attendanceService.getAbsentDates({ userId, startDate, endDate });
+    res.json({ absents });
+  } catch (error) {
+    console.error("Failed to fetch absents:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Get attendance by ID
 router.get("/:id", async (req, res) => {
   try {
@@ -45,7 +57,6 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Update Attendance and Log Changes
 // Update Attendance and Log Changes
 router.put("/:id", async (req, res) => {
   try {
@@ -74,7 +85,7 @@ router.put("/:id", async (req, res) => {
       ...formattedUpdates,
     };
 
-    // ✅ Recalculate totalHours if timeIn and timeOut are present
+    //  Recalculate totalHours if timeIn and timeOut are present
     if (simulated.timeIn && simulated.timeOut) {
       const diffMs = new Date(simulated.timeOut).getTime() - new Date(simulated.timeIn).getTime();
       const diffHours = diffMs / (1000 * 60 * 60);

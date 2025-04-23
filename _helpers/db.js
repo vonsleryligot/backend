@@ -38,6 +38,7 @@ async function initialize() {
         db.Payslip = require("../payslips/payslip.model")(sequelize, DataTypes);
         db.Leave = require("../leaves/leave.model")(sequelize, DataTypes);
         db.Calendar = require("../calendars/calendar.model")(sequelize, DataTypes);
+        db.Employment = require("../employments/employment.model")(sequelize, DataTypes);
 
         console.log("Loaded Models:", Object.keys(db));
 
@@ -54,6 +55,10 @@ async function initialize() {
         //  Add Relationship between ActionLog and Account
         db.ActionLog.belongsTo(db.Account, { foreignKey: "userId" });
         db.Account.hasMany(db.ActionLog, { foreignKey: "userId" });
+
+        db.Account.hasOne(db.Employment, { foreignKey: 'accountId', as: 'employment' });
+        db.Employment.belongsTo(db.Account, { foreignKey: 'accountId', as: 'account' });
+
 
         // Sync models with database
         await sequelize.sync({ alter: true }).then(() => {
