@@ -148,7 +148,50 @@ async function getByAccountId(req, res, next) {
     }
 }
 
+// PUT /employments/account/:accountId - Update or create employment record by accountId
+async function updateByAccountId(req, res, next) {
+    try {
+        const { accountId } = req.params;
+        let employment = await db.Employment.findOne({ where: { accountId } });
+
+        if (!employment) {
+            // Create a new employment record if none exists
+            const newEmployment = await db.Employment.create({
+                accountId,
+                employmentType: req.body.employmentType,
+                department: req.body.department,
+                rank: req.body.rank,
+                position: req.body.position,
+                rate: req.body.rate,
+                bank: req.body.bank,
+                status: req.body.status || 'Active',  // Default status to 'Active' if not provided
+            });
+
+            return res.status(201).json({ message: 'Employment record created successfully', employment: newEmployment });
+        }
+
+        // If employment exists, update the record
+        const updatedData = {
+            employmentType: req.body.employmentType || employment.employmentType,
+            department: req.body.department || employment.department,
+            rank: req.body.rank || employment.rank,
+            position: req.body.position || employment.position,
+            rate: req.body.rate || employment.rate,
+            bank: req.body.bank || employment.bank
+        };
+
+        // Update the employment record
+        await employment.update(updatedData);
+
+        res.json({ message: 'Employment record updated successfully', employment });
+    } catch (err) {
+        console.error('Error updating or creating employment record:', err);
+        next(err);
+    }
+}
+
 // Routes
+router.put('/account/:accountId', updateByAccountId); // Update or create employment record by accountId
 router.get('/account/:accountId', getByAccountId); // Get employment record by accountId
 router.get('/', getAll); // Get all employment records
 router.get('/:id', getById); // Get a single employment record by ID

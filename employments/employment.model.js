@@ -12,6 +12,10 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: true
         },
+        position: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
         status: {
             type: DataTypes.STRING,
             allowNull: false,
@@ -29,10 +33,6 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: true
         },
-        position: {
-            type: DataTypes.STRING,
-            allowNull: true
-        }
     });
 
     Employment.associate = (models) => {
