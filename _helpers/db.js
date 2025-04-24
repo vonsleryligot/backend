@@ -59,6 +59,11 @@ async function initialize() {
         db.Account.hasOne(db.Employment, { foreignKey: 'accountId', as: 'employment' });
         db.Employment.belongsTo(db.Account, { foreignKey: 'accountId', as: 'account' });
 
+        // Add Leave model associations
+        db.Leave.belongsTo(db.Account, { foreignKey: 'employeeId', as: 'employee' });
+        db.Leave.belongsTo(db.Account, { foreignKey: 'approvedBy', as: 'approver' });
+        db.Account.hasMany(db.Leave, { foreignKey: 'employeeId' });
+        db.Account.hasMany(db.Leave, { foreignKey: 'approvedBy' });
 
         // Sync models with database
         await sequelize.sync({ alter: true }).then(() => {
@@ -75,6 +80,7 @@ async function initialize() {
     }
 }
 
+// Call associate functions for all models
 Object.keys(db).forEach((modelName) => {
     if (db[modelName].associate) {
         db[modelName].associate(db);

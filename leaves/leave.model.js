@@ -61,8 +61,9 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
       },
       status: {
-        type: DataTypes.STRING,
-        allowNull: true,
+        type: DataTypes.ENUM('Pending', 'Approved', 'Rejected'),
+        defaultValue: 'Pending',
+        allowNull: false
       },
       paid: {
         type: DataTypes.STRING,
@@ -76,10 +77,27 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: true,
       },
+      approvedBy: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      approvedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      rejectionReason: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      }
     }, {
       tableName: 'leaves',
       timestamps: true,
     });
+  
+    Leave.associate = (models) => {
+      Leave.belongsTo(models.Account, { foreignKey: 'employeeId', as: 'employee' });
+      Leave.belongsTo(models.Account, { foreignKey: 'approvedBy', as: 'approver' });
+    };
   
     return Leave;
   };
