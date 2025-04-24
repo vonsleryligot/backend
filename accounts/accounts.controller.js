@@ -269,7 +269,7 @@ async function update(req, res, next) {
         const updateData = req.body;
 
         // Ensure only allowed fields are updated
-        const allowedFields = ['firstName', 'lastName', 'country', 'city', 'postalCode', 'employmentId', 'rank', 'rate', 'bank', 'position', 'phone', 'role'];
+        const allowedFields = ['firstName', 'lastName', 'country', 'password', 'confirmPassword', 'city', 'postalCode', 'employmentId', 'rank', 'rate', 'bank', 'position', 'phone', 'role'];
         Object.keys(updateData).forEach(key => {
             if (!allowedFields.includes(key)) {
                 delete updateData[key];

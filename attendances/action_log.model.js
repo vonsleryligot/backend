@@ -47,8 +47,10 @@ module.exports = (sequelize, DataTypes) => {
 
   // Static method to approve a shift change
   ActionLog.approveShiftChange = async function (id, AttendanceModel) {
+    const transaction = await this.sequelize.transaction();
+    
     try {
-      const action = await ActionLog.findByPk(id);
+      const action = await ActionLog.findByPk(id, { transaction });
       if (!action || action.status !== "pending") {
         throw new Error("Pending action not found");
       }
@@ -66,30 +68,39 @@ module.exports = (sequelize, DataTypes) => {
         throw new Error("Missing time or date in action details");
       }
 
+      // Find the attendance record for this specific date
       const attendance = await AttendanceModel.findOne({
         where: {
           userId: action.userId,
           date,
         },
+        transaction
       });
 
       if (!attendance) {
         throw new Error("Attendance record not found for user/date");
       }
 
-      attendance.timeIn = timeIn;
-      attendance.timeOut = timeOut;
+      // Update the attendance record with the new times
+      await attendance.update({
+        timeIn,
+        timeOut,
+        totalHours: parseFloat(((new Date(timeOut) - new Date(timeIn)) / (1000 * 60 * 60)).toFixed(2))
+      }, { transaction });
 
-      const diff = new Date(timeOut) - new Date(timeIn);
-      attendance.totalHours = parseFloat((diff / (1000 * 60 * 60)).toFixed(2));
+      // Update the action log status
+      await action.update({ 
+        status: "approved",
+        timestamp: new Date()
+      }, { transaction });
 
-      await attendance.save();
-
-      action.status = "approved";
-      await action.save();
+      // Commit the transaction
+      await transaction.commit();
 
       console.log("Attendance updated and action approved successfully");
     } catch (error) {
+      // Rollback the transaction if there's an error
+      await transaction.rollback();
       console.error("Error in approveShiftChange:", error);
       throw error;
     }
