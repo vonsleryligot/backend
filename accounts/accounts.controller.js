@@ -24,6 +24,10 @@ router.get('/:id', authorize(), getById);
 router.post('/', authorize('Admin'), createSchema, create);
 router.put('/:id', authorize(), updateSchema, update);
 router.delete('/:id', authorize(), _delete);
+router.put('/:id/archive', authorize('Admin'), archive);
+router.put('/:id/unarchive', authorize('Admin'), unarchive);
+router.put('/:id/activate', authorize('Admin'), activate);
+router.put('/:id/deactivate', authorize('Admin'), deactivate);
 
 module.exports = router;
 
@@ -43,7 +47,15 @@ function authenticate(req, res, next) {
             setTokenCookie(res, refreshToken);
             res.json(account);
         })
-        .catch(next);
+        .catch(error => {
+            if (error === 'Account suspended') {
+                return res.status(403).json({ message: 'Account suspended' });
+            }
+            if (error === 'Account inactive') {
+                return res.status(403).json({ message: 'Account inactive' });
+            }
+            next(error);
+        });
 }
 
 function refreshToken(req, res, next) {
@@ -54,7 +66,15 @@ function refreshToken(req, res, next) {
             setTokenCookie(res, refreshToken);
             res.json(account);
         })
-        .catch(next);
+        .catch(error => {
+            if (error === 'Account suspended') {
+                return res.status(403).json({ message: 'Account suspended' });
+            }
+            if (error === 'Account inactive') {
+                return res.status(403).json({ message: 'Account inactive' });
+            }
+            next(error);
+        });
 }
 
 function revokeTokenSchema(req, res, next) {
@@ -175,7 +195,8 @@ function resetPassword(req, res, next) {
 }
 
 function getAll(req, res, next) {
-    accountService.getAll()
+    const includeArchived = req.query.includeArchived === 'true';
+    accountService.getAll(includeArchived)
         .then(accounts => res.json(accounts))
         .catch(next);
 }
@@ -189,7 +210,15 @@ function getById(req, res, next) {
 
     accountService.getById(req.params.id)
         .then(account => account ? res.json(account) : res.sendStatus(404))
-        .catch(next);
+        .catch(error => {
+            if (error === 'Account suspended') {
+                return res.status(403).json({ message: 'Account suspended' });
+            }
+            if (error === 'Account inactive') {
+                return res.status(403).json({ message: 'Account inactive' });
+            }
+            next(error);
+        });
 }
 
 function createSchema(req, res, next) {
@@ -304,6 +333,30 @@ function _delete(req, res, next) {
 
     accountService.delete(req.params.id)
         .then(() => res.json({ message: 'Account deleted successfully' }))
+        .catch(next);
+}
+
+function archive(req, res, next) {
+    accountService.archive(req.params.id)
+        .then(account => res.json(account))
+        .catch(next);
+}
+
+function unarchive(req, res, next) {
+    accountService.unarchive(req.params.id)
+        .then(account => res.json(account))
+        .catch(next);
+}
+
+function activate(req, res, next) {
+    accountService.activate(req.params.id)
+        .then(account => res.json(account))
+        .catch(next);
+}
+
+function deactivate(req, res, next) {
+    accountService.deactivate(req.params.id)
+        .then(account => res.json(account))
         .catch(next);
 }
 

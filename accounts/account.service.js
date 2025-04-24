@@ -23,14 +23,19 @@ module.exports = {
     getById,
     create,
     update,
-    delete: _delete
+    delete: _delete,
+    archive,
+    unarchive,
+    activate,
+    deactivate
 };
 
-async function getAllWithPagination(page, limit) {
+async function getAllWithPagination(page, limit, includeArchived = false) {
     const offset = (page - 1) * limit;
+    const where = includeArchived ? { isVerified: true } : { isVerified: true, archived: false };
 
     const users = await db.Account.findAndCountAll({
-        where: { isVerified: true }, // Fetch only verified users
+        where,
         limit,
         offset
     });
@@ -48,6 +53,16 @@ async function authenticate({ email, password, ipAddress }) {
 
     if (!account || !account.isVerified || !(await bcrypt.compare(password, account.passwordHash))) {
         throw 'Email or password is incorrect';
+    }
+
+    // Check if account is archived
+    if (account.archived) {
+        throw 'Account suspended';
+    }
+
+    // Check if account is inactive
+    if (account.status === 'Inactive') {
+        throw 'Account inactive';
     }
 
     // authentication successful so generate jwt and refresh tokens
@@ -68,6 +83,16 @@ async function authenticate({ email, password, ipAddress }) {
 async function refreshToken({ token, ipAddress }) {
     const refreshToken = await getRefreshToken(token);
     const account = await refreshToken.getAccount();
+
+    // Check if account is archived
+    if (account.archived) {
+        throw 'Account suspended';
+    }
+
+    // Check if account is inactive
+    if (account.status === 'Inactive') {
+        throw 'Account inactive';
+    }
 
     // replace old refresh token with a new one and save
     const newRefreshToken = generateRefreshToken(account, ipAddress);
@@ -205,13 +230,25 @@ async function resetPassword({ token, password }) {
     await account.save();
 }
 
-async function getAll() {
-    const accounts = await db.Account.findAll();
+async function getAll(includeArchived = false) {
+    const where = includeArchived ? {} : { archived: false };
+    const accounts = await db.Account.findAll({ where });
     return accounts.map(x => basicDetails(x));
 }
 
 async function getById(id) {
     const account = await getAccount(id);
+    
+    // Check if account is archived
+    if (account.archived) {
+        throw 'Account suspended';
+    }
+    
+    // Check if account is inactive
+    if (account.status === 'Inactive') {
+        throw 'Account inactive';
+    }
+    
     return basicDetails(account);
 }
 
@@ -250,10 +287,41 @@ async function update(id, params) {
     await user.save();
 }
 
-
 async function _delete(id) {
     const account = await getAccount(id);
     await account.destroy();
+}
+
+async function archive(id) {
+    const account = await getAccount(id);
+    account.archived = true;
+    account.updated = new Date();
+    await account.save();
+    return basicDetails(account);
+}
+
+async function unarchive(id) {
+    const account = await getAccount(id);
+    account.archived = false;
+    account.updated = new Date();
+    await account.save();
+    return basicDetails(account);
+}
+
+async function activate(id) {
+    const account = await getAccount(id);
+    account.status = 'Active';
+    account.updated = new Date();
+    await account.save();
+    return basicDetails(account);
+}
+
+async function deactivate(id) {
+    const account = await getAccount(id);
+    account.status = 'Inactive';
+    account.updated = new Date();
+    await account.save();
+    return basicDetails(account);
 }
 
 // helper functions
@@ -297,8 +365,8 @@ function randomTokenString() {
 }
 
 function basicDetails(account) {
-    const { id, title, firstName, lastName, phone, email, role, country, city, postalCode, created, updated, isVerified } = account;
-    return { id, title, firstName, lastName, phone, email, role, country, city, postalCode, created, updated, isVerified };
+    const { id, title, firstName, lastName, phone, email, role, country, city, postalCode, created, updated, isVerified, status } = account;
+    return { id, title, firstName, lastName, phone, email, role, country, city, postalCode, created, updated, isVerified, status };
 }
 
 async function sendVerificationEmail(account, origin) {

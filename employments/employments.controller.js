@@ -109,26 +109,26 @@ async function remove(req, res, next) {
 }
 
 // Archive Employment - PATCH /employments/:id/archive
-async function archiveEmployment(req, res, next) {
-    try {
-        const updatedEmployment = await employmentService.update(req.params.id, { status: 'archived' });
-        res.json({ message: 'Employment archived', employment: updatedEmployment });
-    } catch (err) {
-        console.error('Error archiving employment record:', err);
-        next(err);
-    }
-}
+// async function archiveEmployment(req, res, next) {
+//     try {
+//         const updatedEmployment = await employmentService.update(req.params.id, { status: 'archived' });
+//         res.json({ message: 'Employment archived', employment: updatedEmployment });
+//     } catch (err) {
+//         console.error('Error archiving employment record:', err);
+//         next(err);
+//     }
+// }
 
 // Unarchive Employment - PATCH /employments/:id/unarchive
-async function unarchiveEmployment(req, res, next) {
-    try {
-        const updatedEmployment = await employmentService.update(req.params.id, { status: 'Active' });
-        res.json({ message: 'Employment unarchived', employment: updatedEmployment });
-    } catch (err) {
-        console.error('Error unarchiving employment record:', err);
-        next(err);
-    }
-}
+// async function unarchiveEmployment(req, res, next) {
+//     try {
+//         const updatedEmployment = await employmentService.update(req.params.id, { status: 'Active' });
+//         res.json({ message: 'Employment unarchived', employment: updatedEmployment });
+//     } catch (err) {
+//         console.error('Error unarchiving employment record:', err);
+//         next(err);
+//     }
+// }
 
 // GET /employments/account/:accountId - Get employment record by accountId
 async function getByAccountId(req, res, next) {
@@ -198,7 +198,7 @@ router.get('/:id', getById); // Get a single employment record by ID
 router.post('/', create); // Create a new employment record
 router.put('/:id', update); // Update an existing employment record
 router.delete('/:id', remove); // Delete an employment record
-router.patch('/:id/archive', archiveEmployment); // Archive an employment record
-router.patch('/:id/unarchive', unarchiveEmployment); // Unarchive an employment record
+// router.patch('/:id/archive', archiveEmployment); // Archive an employment record
+// router.patch('/:id/unarchive', unarchiveEmployment); // Unarchive an employment record
 
 module.exports = router;

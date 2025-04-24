@@ -29,6 +29,11 @@ function model(sequelize) {
         created: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
         updated: { type: DataTypes.DATE },
         archived: { type: DataTypes.BOOLEAN, defaultValue: false },
+        status: { 
+            type: DataTypes.ENUM('Active', 'Inactive'), 
+            defaultValue: 'Active',
+            allowNull: false
+        },
         isVerified: {
             type: DataTypes.VIRTUAL,
             get() { return !!(this.verified || this.passwordReset); }
@@ -42,7 +47,14 @@ function model(sequelize) {
         },
         scopes: {
             withHash: { attributes: {}, }
-        }        
+        },
+        hooks: {
+            beforeUpdate: (account) => {
+                if (account.changed('archived') && account.archived === true) {
+                    account.status = 'Inactive';
+                }
+            }
+        }
     };
 
     return sequelize.define('account', attributes, options);

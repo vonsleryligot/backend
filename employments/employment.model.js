@@ -16,11 +16,6 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: true
         },
-        status: {
-            type: DataTypes.STRING,
-            allowNull: false,
-            defaultValue: 'Active' // or whatever default status you need
-        },
         rank: {
             type: DataTypes.STRING,
             allowNull: true
