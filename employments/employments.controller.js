@@ -152,6 +152,13 @@ async function getByAccountId(req, res, next) {
 async function updateByAccountId(req, res, next) {
     try {
         const { accountId } = req.params;
+        
+        // Get the account first to check status
+        const account = await db.Account.findByPk(accountId);
+        if (!account) {
+            return res.status(404).json({ message: 'Account not found' });
+        }
+
         let employment = await db.Employment.findOne({ where: { accountId } });
 
         if (!employment) {
@@ -164,7 +171,7 @@ async function updateByAccountId(req, res, next) {
                 position: req.body.position,
                 rate: req.body.rate,
                 bank: req.body.bank,
-                status: req.body.status || 'Active',  // Default status to 'Active' if not provided
+                status: account.status // Use account status
             });
 
             return res.status(201).json({ message: 'Employment record created successfully', employment: newEmployment });
@@ -177,7 +184,8 @@ async function updateByAccountId(req, res, next) {
             rank: req.body.rank || employment.rank,
             position: req.body.position || employment.position,
             rate: req.body.rate || employment.rate,
-            bank: req.body.bank || employment.bank
+            bank: req.body.bank || employment.bank,
+            status: account.status // Always sync with account status
         };
 
         // Update the employment record

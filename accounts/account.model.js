@@ -50,8 +50,12 @@ function model(sequelize) {
         },
         hooks: {
             beforeUpdate: (account) => {
-                if (account.changed('archived') && account.archived === true) {
-                    account.status = 'Inactive';
+                if (account.changed('archived')) {
+                    if (account.archived === true) {
+                        account.status = 'Inactive';
+                    } else if (account.archived === false) {
+                        account.status = 'Active';
+                    }
                 }
             }
         }

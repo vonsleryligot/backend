@@ -72,16 +72,39 @@
     async function createOrUpdate(data) {
         const { accountId, employmentType, department, rank, rate, bank, position } = data;
 
+        // Get the account to sync status
+        const account = await db.Account.findByPk(accountId);
+        if (!account) {
+            throw new Error('Account not found');
+        }
+
         // Check if employment already exists for the account
         let employment = await db.Employment.findOne({ where: { accountId } });
 
         if (employment) {
             // Update existing employment
-            await employment.update({ employmentType, department, rank, rate, bank, position });
+            await employment.update({ 
+                employmentType, 
+                department, 
+                rank, 
+                rate, 
+                bank, 
+                position,
+                status: account.status // Sync status with account
+            });
             return employment;
         } else {
             // Create new employment
-            return await db.Employment.create({ accountId, employmentType, department, rank, rate, bank, position });
+            return await db.Employment.create({ 
+                accountId, 
+                employmentType, 
+                department, 
+                rank, 
+                rate, 
+                bank, 
+                position,
+                status: account.status // Set initial status from account
+            });
         }
     }
 
